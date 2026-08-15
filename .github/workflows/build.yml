@@ -15,13 +15,12 @@ jobs:
       - name: Get dependencies
         run: |
           rm -rf vendor/borealis vendor/glm vendor/libnx-ext vendor/zstd
-
           git clone --depth 1 --branch legacy https://github.com/natinusala/borealis.git vendor/borealis
           git clone --depth 1 https://github.com/g-truc/glm.git vendor/glm
           git clone --depth 1 https://github.com/XorTroll/libnx-ext.git vendor/libnx-ext
           git clone --depth 1 https://github.com/facebook/zstd.git vendor/zstd
 
-            - name: Build Borealis
+      - name: Build Borealis
         run: |
           sed -i '/swkbdConfigSetStringLenMaxExt/d' vendor/borealis/library/lib/swkbd.cpp
           cd vendor/borealis
