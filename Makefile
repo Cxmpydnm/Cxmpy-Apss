@@ -1,0 +1,145 @@
+#---------------------------------------------------------------------------------
+.SUFFIXES:
+#---------------------------------------------------------------------------------
+
+ifeq ($(strip $(DEVKITPRO)),)
+$(error "Please set DEVKITPRO in your environment. export DEVKITPRO=<path to>/devkitpro")
+endif
+
+TOPDIR ?= $(CURDIR)
+include $(DEVKITPRO)/libnx/switch_rules
+
+#---------------------------------------------------------------------------------
+# TARGET is the name of the output
+# BUILD is the directory where object files & dependancy files will be placed
+# SOURCES is a list of directories containing source code
+# DATA is a list of directories containing data files
+# INCLUDES is a list of directories containing header files
+# EXEFS_SRC is a list of directories containing data files and binaries for the exefs
+# ROMFS is the directory containing data to be added to RomFS, relative to the makefile
+#
+# NO_ICON: if set to anything, do not use icon.
+# NO_NACP: if set to anything, no .nacp file is generated.
+# APP_TITLE is the name of the app stored in the .nacp file (Optional)
+# APP_AUTHOR is the author of the app stored in the .nacp file (Optional)
+# APP_VERSION is the version of the app stored in the .nacp file (Optional)
+# APP_TITLEID is the titleID of the app stored in the .nacp file (Optional)
+# ICON is the filename of the icon (.jpg), relative to the project folder.
+#   If not set, it attempts to use one of the following (in this order):
+#     - <Project name>.jpg
+#     - icon.jpg
+#     - <libnx folder>/default_icon.jpg
+#---------------------------------------------------------------------------------
+TARGET		:=	CxmpyApps
+BUILD		:=	build
+SOURCES		:=	vendor/qrcodegen vendor/dht vendor/libnx-ext/libnx-ext/source vendor/libnx-ext/libnx-ipcext/source source source/app source/ui source/ui/catalog source/ui/downloads source/ui/forwarders source/ui/installed source/ui/mtp source/ui/saves source/ui/settings source/ui/updater source/ui/detail source/install source/platform  source/installer source/utils source/yati source/yati/container source/yati/nx source/yati/nx/nxdumptool source/yati/source source/minini source/libhaze source/mtp source/core
+DATA		:=	data
+INCLUDES	:=	vendor source vendor/libnx-ext/libnx-ipcext/include vendor/libnx-ext/libnx-ext/include include include/minini include/yati/nx/nxdumptool include/libhaze vendor/borealis/library/include vendor/borealis/library/include/borealis/extern vendor/borealis/library/include/borealis/extern/nanovg vendor/borealis/library/lib/extern/nanovg vendor/borealis/library/lib/extern/fmt/include vendor/borealis/library/lib/extern/yoga vendor/borealis/library/lib/extern/tweeny/include
+ROMFS		:=	romfs
+
+APP_TITLE	:=	Cxmpy Apps
+APP_AUTHOR	:=	Cxmpy
+APP_VERSION	:=	v2.1.8
+DEFINES		:=	-DPIPENSX_VERSION=\"$(APP_VERSION)\"
+
+#---------------------------------------------------------------------------------
+ARCH	:=	-march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft -fPIE
+
+# Ensure we use portlibs pkg-config
+export PKG_CONFIG_PATH := $(PORTLIBS)/lib/pkgconfig
+
+CFLAGS	:=	-g -Wall -O2 -ffunction-sections \
+			$(ARCH) $(DEFINES)
+
+# We use pkg-config to get SDL2 flags
+CFLAGS	+=	$(INCLUDE) -D__SWITCH__ `pkg-config --cflags sdl2 SDL2_image SDL2_ttf`
+
+CXXFLAGS	:= $(CFLAGS) -std=gnu++23 -DBRLS_RESOURCES=\ 
+
+ASFLAGS	:=	-g $(ARCH)
+LDFLAGS	=	-specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
+
+LIBS	:=	$(CURDIR)/vendor/borealis/library/libborealis.a $(CURDIR)/vendor/borealis/library/lib/extern/fmt/libfmt.a $(CURDIR)/vendor/borealis/library/lib/extern/yoga/yoga/libyogacore.a $(CURDIR)/vendor/borealis/library/libtinyxml2.a `pkg-config --libs --static sdl2 SDL2_image SDL2_ttf SDL2_gfx` -lmbedtls -lmbedcrypto -lmbedx509 -lzstd -lusbhsfs -lntfs-3g -llwext4 -lcurl  -lz -ldeko3d -lminiupnpc -lnx -lm
+
+#---------------------------------------------------------------------------------
+LIBDIRS	:= $(PORTLIBS) $(LIBNX)
+
+#---------------------------------------------------------------------------------
+ifneq ($(BUILD),$(notdir $(CURDIR)))
+#---------------------------------------------------------------------------------
+
+export OUTPUT	:=	$(CURDIR)/$(TARGET)
+export TOPDIR	:=	$(CURDIR)
+
+export VPATH	:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
+			$(foreach dir,$(DATA),$(CURDIR)/$(dir))
+
+export DEPSDIR	:=	$(CURDIR)/$(BUILD)
+
+CFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
+CPPFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
+SFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
+BINFILES	:=	$(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.*)))
+
+ifeq ($(strip $(CPPFILES)),)
+	export LD	:=	$(CC)
+else
+	export LD	:=	$(CXX)
+endif
+
+export OFILES_BIN	:=	$(addsuffix .o,$(BINFILES))
+export OFILES_SRC	:=	$(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o)
+export OFILES 	:=	$(OFILES_BIN) $(OFILES_SRC)
+export HFILES_BIN	:=	$(addsuffix .h,$(subst .,_,$(BINFILES)))
+
+export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
+			$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
+			-I$(CURDIR)/$(BUILD)
+
+export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib)
+
+export APP_ICON := $(TOPDIR)/icon.jpg
+
+export NROFLAGS += --icon=$(APP_ICON) --nacp=$(CURDIR)/$(TARGET).nacp
+
+ifneq ($(ROMFS),)
+	export NROFLAGS += --romfsdir=$(CURDIR)/$(ROMFS)
+endif
+
+.PHONY: $(BUILD) clean all
+
+#---------------------------------------------------------------------------------
+all: $(BUILD)
+
+$(BUILD):
+	@[ -d $@ ] || mkdir -p $@
+	@$(MAKE) --no-print-directory -C $(BUILD) -f "$(CURDIR)/Makefile"
+
+#---------------------------------------------------------------------------------
+clean:
+	@echo clean ...
+	@rm -fr $(BUILD) $(TARGET).pfs0 $(TARGET).nso $(TARGET).nro $(TARGET).nacp $(TARGET).elf
+
+#---------------------------------------------------------------------------------
+else
+.PHONY:	all
+
+DEPENDS	:=	$(OFILES:.o=.d)
+
+all	:	$(OUTPUT).pfs0 $(OUTPUT).nro
+
+$(OUTPUT).pfs0	:	$(OUTPUT).nso
+$(OUTPUT).nso	:	$(OUTPUT).elf
+$(OUTPUT).nro	:	$(OUTPUT).elf $(OUTPUT).nacp
+$(OUTPUT).elf	:	$(OFILES)
+
+$(OFILES_SRC)	: $(HFILES_BIN)
+
+%.bin.o	%_bin.h :	%.bin
+	@echo $(notdir $<)
+	@$(bin2o)
+
+-include $(DEPENDS)
+
+endif
+#---------------------------------------------------------------------------------

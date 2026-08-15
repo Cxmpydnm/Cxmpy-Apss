@@ -1,0 +1,63 @@
+# The Goonies App
+
+Instalador y gestor de contenido para Nintendo Switch, desarrollado para la comunidad Switch ES — The Goonies OS.
+---
+Únete a nuestra comunidad en https://t.me/+WWoAIRB3xjAwYTM0
+
+Apoya este proyecto: https://www.paypal.com/paypalme/GoodmanBCN
+
+## Qué es
+
+The Goonies App es una aplicación homebrew para Nintendo Switch con interfaz propia, diseñada para simplificar la gestión de contenido en consolas con CFW. Todo desde una interfaz en español (con opción de inglés).
+
+*   **Descarga de Juegos:** Soporte integrado para descargar contenido a través de red (Torrents y enlaces Magnet) directamente desde la consola.
+*   **Instalar por MTP:** Conecta el cable USB al PC y transfiere archivos directamente, sin necesidad de software adicional en el PC.
+*   **Instalar desde un pendrive o un disco externo:** Conecta el USB o el disco externo a la consola y transfiere archivos directamente.  Admite discos duros y pendrives formateados en NTFS, exFAT y FAT32
+*   **Juegos Instalados:** Visualiza, gestiona y elimina títulos instalados en la consola.
+*   **Partidas Guardadas:** Administra las saves de tus juegos.
+*   **Crea Forwarders:** Crea accesos directos de tus apps de Homebrew favoritas.
+*   **Explorar microSD desde MTP:** Navegador de archivos de la tarjeta SD.
+  
+## Componentes de terceros
+
+Este proyecto utiliza los siguientes componentes de código abierto:
+
+*   **yati:** Motor de instalación de NCAs (del proyecto sphaira de ITotalJustice).
+*   **libhaze:** Librería MTP del proyecto Atmosphere.
+*   **pipensx:** Herramientas y funciones base (de i3sey).
+*   **minini:** Librería para archivos de configuración INI.
+
+La interfaz gráfica, el módulo de instalación y la arquitectura general son código original de este proyecto.
+
+## Compilación
+
+### Requisitos
+
+*   devkitPro con el toolchain de Switch (devkitA64)
+*   Librerías (instalables con pacman de devkitPro)
+
+### Pasos
+
+```bash
+git clone https://github.com/GoodmanBCN10/The-Goonies-Installer.git
+cd The-Goonies-Installer
+make -j$(nproc)
+```
+
+El archivo resultante `TheGooniesInstaller.nro` se genera en la raíz del proyecto.
+
+## Instalación
+
+Copia `TheGooniesInstaller.nro` a la carpeta `/switch/` de tu microSD.
+
+## Créditos
+
+*   **ITotalJustice** — Autor de yati (motor de instalación) y sphaira.
+*   **Atmosphere-NX** — Autores de libhaze (librería MTP).
+*   **i3sey** — Autor de pipensx.
+*   **GoodmanBCN** — Desarrollo, interfaz y mantenimiento.
+*   **Comunidad Switch ES — The Goonies OS** — Testing y feedback.
+
+## Licencia
+
+Este proyecto se distribuye bajo la licencia GPLv2+ (debido a la inclusión de pipensx). Consulta el archivo `LICENSE_GPLv2+.md` para los términos completos.
