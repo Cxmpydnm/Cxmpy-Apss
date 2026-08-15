@@ -11,8 +11,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          submodules: recursive
+
+      - name: Get dependencies
+        run: |
+          rm -rf vendor/borealis vendor/glm vendor/libnx-ext vendor/zstd
+          git clone --depth 1 https://github.com/natinusala/borealis.git vendor/borealis
+          git clone --depth 1 https://github.com/g-truc/glm.git vendor/glm
+          git clone --depth 1 https://github.com/XorTroll/libnx-ext.git vendor/libnx-ext
+          git clone --depth 1 https://github.com/facebook/zstd.git vendor/zstd
 
       - name: Build Cxmpy Apps
         run: make -j2
